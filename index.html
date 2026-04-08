@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Split Bill</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#667eea">
+
+<style>
+:root {
+  --bg: linear-gradient(135deg, #667eea, #764ba2);
+  --card: rgba(255,255,255,0.1);
+  --text: #ffffff;
+  --accent: #22c55e;
+  --danger: #ef4444;
+  --edit: #38bdf8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--text);
+}
+
+/* MAIN CONTAINER */
+.container {
+  width: 100%;
+  max-width: 700px;
+  background: var(--card);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+/* HEADER */
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+}
+
+/* INPUT SECTION */
+.add-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-box input {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+}
+
+.add-box button {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* FRIEND CARD */
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,0,0,0.2);
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.card-info {
+  flex: 1;
+}
+
+.card strong {
+  font-size: 18px;
+}
+
+/* ACTION BUTTONS */
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.actions button {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+}
+
+.edit { background: var(--edit); }
+.delete { background: var(--danger); }
+.save { background: var(--accent); }
+.cancel { background: gray; }
+
+/* CALCULATE BUTTON */
+.calc-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #3b82f6;
+  font-size: 16px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+/* RESULT */
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.4);
+}
+
+.transaction {
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+}
+
+/* EMPTY */
+.empty {
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* 🔥 RESPONSIVE DESIGN */
+@media (max-width: 600px) {
+  .add-box {
+    grid-template-columns: 1fr;
+  }
+
+  .add-box button {
+    width: 100%;
+  }
+
+  .card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>💸 Split Bill</h1>
+
+  <div class="add-box">
+    <input id="name" placeholder="Friend Name">
+    <input id="amount" type="number" placeholder="Amount Paid">
+    <button onclick="addFriend()">Add</button>
+  </div>
+
+  <div id="list"></div>
+
+  <button class="calc-btn" onclick="calculate()">Calculate Split</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+let friends = [];
+
+function addFriend() {
+  const name = document.getElementById("name").value.trim();
+  const amount = parseFloat(document.getElementById("amount").value);
+
+  if (!name || isNaN(amount)) {
+    alert("Enter valid details");
+    return;
+  }
+
+  friends.push({ name, amount, editing: false });
+  document.getElementById("name").value = "";
+  document.getElementById("amount").value = "";
+
+  render();
+}
+
+function render() {
+  const list = document.getElementById("list");
+
+  if (friends.length === 0) {
+    list.innerHTML = `<div class="empty">No friends added yet</div>`;
+    return;
+  }
+
+  list.innerHTML = "";
+
+  friends.forEach((f, i) => {
+    if (f.editing) {
+      list.innerHTML += `
+        <div class="card">
+          <input value="${f.name}" id="name-${i}">
+          <input type="number" value="${f.amount}" id="amount-${i}">
+          <div class="actions">
+            <button class="save" onclick="saveEdit(${i})">✔</button>
+            <button class="cancel" onclick="cancelEdit(${i})">✖</button>
+          </div>
+        </div>
+      `;
+    } else {
+      list.innerHTML += `
+        <div class="card">
+          <div class="card-info">
+            <strong>${f.name}</strong><br>
+            ₹${f.amount}
+          </div>
+          <div class="actions">
+            <button class="edit" onclick="editFriend(${i})">Edit</button>
+            <button class="delete" onclick="deleteFriend(${i})">Delete</button>
+          </div>
+        </div>
+      `;
+    }
+  });
+}
+
+function editFriend(i) {
+  friends[i].editing = true;
+  render();
+}
+
+function saveEdit(i) {
+  const name = document.getElementById(`name-${i}`).value;
+  const amount = parseFloat(document.getElementById(`amount-${i}`).value);
+
+  if (!name || isNaN(amount)) {
+    alert("Invalid input");
+    return;
+  }
+
+  friends[i] = { name, amount, editing: false };
+  render();
+}
+
+function cancelEdit(i) {
+  friends[i].editing = false;
+  render();
+}
+
+function deleteFriend(i) {
+  friends.splice(i, 1);
+  render();
+}
+
+function calculate() {
+  if (friends.length < 2) {
+    alert("Add at least 2 people");
+    return;
+  }
+
+  let total = friends.reduce((sum, f) => sum + f.amount, 0);
+  let avg = total / friends.length;
+
+  let debtors = [];
+  let creditors = [];
+
+  friends.forEach(f => {
+    let diff = f.amount - avg;
+
+    if (diff < 0) debtors.push({ name: f.name, amount: -diff });
+    else creditors.push({ name: f.name, amount: diff });
+  });
+
+  let result = `
+    <strong>Total:</strong> ₹${total.toFixed(2)}<br>
+    <strong>Per Person:</strong> ₹${avg.toFixed(2)}<br><br>
+  `;
+
+  debtors.forEach(d => {
+    creditors.forEach(c => {
+      if (d.amount > 0 && c.amount > 0) {
+        let pay = Math.min(d.amount, c.amount);
+
+        result += `<div class="transaction">
+          ${d.name} ➜ pays ₹${pay.toFixed(2)} to ${c.name}
+        </div>`;
+
+        d.amount -= pay;
+        c.amount -= pay;
+      }
+    });
+  });
+
+  document.getElementById("result").innerHTML = result;
+}
+
+render();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("Service Worker Registered"));
+}
+</script>
+
+</body>
+</html>
