@@ -1,65 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Bill Splitter</title>
+  <meta charset="UTF-8">
+  <title>Split Bill App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    input {
+      width: 45%;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background: #38bdf8;
+      cursor: pointer;
+    }
+
+    .friend {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      background: #334155;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .result {
+      margin-top: 20px;
+      background: #020617;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Bill Splitter</h2>
+<div class="container">
+  <h1>💸 Split Bill</h1>
 
-<input id="name" placeholder="Name">
-<input id="amount" placeholder="Amount">
-<button onclick="addFriend()">Add</button>
+  <input id="name" placeholder="Friend Name">
+  <input id="amount" type="number" placeholder="Amount Paid">
+  <button onclick="addFriend()">Add</button>
 
-<ul id="list"></ul>
+  <div id="list"></div>
 
-<button onclick="calculate()">Split Bill</button>
+  <button onclick="calculate()">Calculate</button>
 
-<h3 id="result"></h3>
+  <div class="result" id="result"></div>
+</div>
 
 <script>
-let friends = [];
+  let friends = [];
 
-function addFriend() {
-  const name = document.getElementById("name").value;
-  const amount = parseFloat(document.getElementById("amount").value);
+  function addFriend() {
+    const name = document.getElementById("name").value;
+    const amount = parseFloat(document.getElementById("amount").value);
 
-  friends.push({ name, paid: amount });
+    if (!name || isNaN(amount)) {
+      alert("Enter valid details");
+      return;
+    }
 
-  const li = document.createElement("li");
-  li.textContent = name + " - ₹" + amount;
-  document.getElementById("list").appendChild(li);
-}
+    friends.push({ name, amount });
+    render();
 
-function calculate() {
-  const total = friends.reduce((sum, f) => sum + f.paid, 0);
-  const share = total / friends.length;
+    document.getElementById("name").value = "";
+    document.getElementById("amount").value = "";
+  }
 
-  let debtors = [];
-  let creditors = [];
+  function render() {
+    const list = document.getElementById("list");
+    list.innerHTML = "";
 
-  friends.forEach(f => {
-    const balance = f.paid - share;
-    if (balance < 0) debtors.push({ name: f.name, amt: -balance });
-    else if (balance > 0) creditors.push({ name: f.name, amt: balance });
-  });
-
-  let resultText = "";
-
-  debtors.forEach(d => {
-    creditors.forEach(c => {
-      if (d.amt === 0) return;
-
-      let pay = Math.min(d.amt, c.amt);
-      resultText += d.name + " pays ₹" + pay + " to " + c.name + "<br>";
-
-      d.amt -= pay;
-      c.amt -= pay;
+    friends.forEach(f => {
+      list.innerHTML += `
+        <div class="friend">
+          <span>${f.name}</span>
+          <span>₹${f.amount}</span>
+        </div>
+      `;
     });
-  });
+  }
 
-  document.getElementById("result").innerHTML = resultText;
-}
+  function calculate() {
+    let total = friends.reduce((sum, f) => sum + f.amount, 0);
+    let avg = total / friends.length;
+
+    let result = "";
+
+    let debtors = [];
+    let creditors = [];
+
+    friends.forEach(f => {
+      let diff = f.amount - avg;
+
+      if (diff < 0) {
+        debtors.push({ name: f.name, amount: -diff });
+      } else {
+        creditors.push({ name: f.name, amount: diff });
+      }
+    });
+
+    debtors.forEach(d => {
+      creditors.forEach(c => {
+        if (d.amount > 0 && c.amount > 0) {
+          let pay = Math.min(d.amount, c.amount);
+
+          result += `${d.name} pays ₹${pay.toFixed(2)} to ${c.name}<br>`;
+
+          d.amount -= pay;
+          c.amount -= pay;
+        }
+      });
+    });
+
+    document.getElementById("result").innerHTML = result || "All settled!";
+  }
 </script>
 
 </body>
