@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bill Splitter</title>
+</head>
+<body>
+
+<h2>Bill Splitter</h2>
+
+<input id="name" placeholder="Name">
+<input id="amount" placeholder="Amount">
+<button onclick="addFriend()">Add</button>
+
+<ul id="list"></ul>
+
+<button onclick="calculate()">Split Bill</button>
+
+<h3 id="result"></h3>
+
+<script>
+let friends = [];
+
+function addFriend() {
+  const name = document.getElementById("name").value;
+  const amount = parseFloat(document.getElementById("amount").value);
+
+  friends.push({ name, paid: amount });
+
+  const li = document.createElement("li");
+  li.textContent = name + " - ₹" + amount;
+  document.getElementById("list").appendChild(li);
+}
+
+function calculate() {
+  const total = friends.reduce((sum, f) => sum + f.paid, 0);
+  const share = total / friends.length;
+
+  let debtors = [];
+  let creditors = [];
+
+  friends.forEach(f => {
+    const balance = f.paid - share;
+    if (balance < 0) debtors.push({ name: f.name, amt: -balance });
+    else if (balance > 0) creditors.push({ name: f.name, amt: balance });
+  });
+
+  let resultText = "";
+
+  debtors.forEach(d => {
+    creditors.forEach(c => {
+      if (d.amt === 0) return;
+
+      let pay = Math.min(d.amt, c.amt);
+      resultText += d.name + " pays ₹" + pay + " to " + c.name + "<br>";
+
+      d.amt -= pay;
+      c.amt -= pay;
+    });
+  });
+
+  document.getElementById("result").innerHTML = resultText;
+}
+</script>
+
+</body>
+</html>
